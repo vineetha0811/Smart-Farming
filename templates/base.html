@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Smart Farming Assistant{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="logo-icon">&#x1f331;</span>
+                <h2>AI Smart Farming<br>Assistant</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="{{ 'active' if active_page == 'dashboard' else '' }}">
+                    <span class="nav-icon">&#x1f3e0;</span> Dashboard
+                </a>
+                <a href="{{ url_for('farm') }}" class="{{ 'active' if active_page == 'farm' else '' }}">
+                    <span class="nav-icon">&#x1f4c8;</span> Farm Setup
+                </a>
+                <a href="{{ url_for('irrigation') }}" class="{{ 'active' if active_page == 'irrigation' else '' }}">
+                    <span class="nav-icon">&#x1f4a7;</span> Smart Irrigation
+                </a>
+                <a href="{{ url_for('disease') }}" class="{{ 'active' if active_page == 'disease' else '' }}">
+                    <span class="nav-icon">&#x1f3c3;</span> Crop Health
+                </a>
+                <a href="{{ url_for('pest_nutrient') }}" class="{{ 'active' if active_page == 'pest_nutrient' else '' }}">
+                    <span class="nav-icon">&#x1f41c;</span> Pest &amp; Nutrient
+                </a>
+                <a href="{{ url_for('risk_monitor') }}" class="{{ 'active' if active_page == 'risk_monitor' else '' }}">
+                    <span class="nav-icon">&#x26a0;&#xfe0f;</span> Risk Monitor
+                </a>
+                <a href="{{ url_for('recommendations') }}" class="{{ 'active' if active_page == 'recommendations' else '' }}">
+                    <span class="nav-icon">&#x1f4a1;</span> Recommendations
+                </a>
+                <a href="{{ url_for('history') }}" class="{{ 'active' if active_page == 'history' else '' }}">
+                    <span class="nav-icon">&#x1f4cb;</span> History
+                </a>
+                <a href="{{ url_for('iot_simulation') }}" class="{{ 'active' if active_page == 'iot_simulation' else '' }}">
+                    <span class="nav-icon">&#x1f4e1;</span> IoT Simulation
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="{{ url_for('logout') }}"><span class="nav-icon">&#x27a1;&#xfe0f;</span> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Mobile overlay -->
+        <div class="sidebar-overlay" id="overlay"></div>
+
+        <!-- Main content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">&#9776;</button>
+                    <h1>{% block page_title %}{% endblock %}</h1>
+                </div>
+                <div class="topbar-right">
+                    {% if session.get('user_name') %}
+                    <div class="user-badge">
+                        <span class="user-icon">&#x1f464;</span>
+                        {{ session['user_name'] }}
+                    </div>
+                    {% endif %}
+                </div>
+            </header>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="page-content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

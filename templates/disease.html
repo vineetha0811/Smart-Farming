@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Crop Health - AI Smart Farming Assistant{% endblock %}
+{% block page_title %}Crop Disease Detection{% endblock %}
+
+{% block content %}
+<div class="two-col">
+    <!-- Upload Form -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f3c3; Upload Leaf / Crop Image</h3>
+            <span class="card-icon">&#x1f5bc;&#xfe0f;</span>
+        </div>
+
+        <form method="POST" action="{{ url_for('disease') }}" enctype="multipart/form-data">
+            <label for="leaf_image" class="upload-area" style="display:block;">
+                <span class="upload-icon">&#x1f4f7;</span>
+                <p>Click to choose a crop/leaf image<br>or drag it here</p>
+                <p class="upload-hint">Supported formats: PNG, JPG, JPEG, GIF | Max 5MB</p>
+            </label>
+            <input type="file" id="leaf_image" name="leaf_image" accept="image/*" style="display:none;" onchange="previewImage(this)">
+
+            <img id="image-preview" class="image-preview" style="display:none;" alt="Image preview">
+
+            <button type="submit" class="btn btn-primary btn-lg btn-block" style="margin-top:16px;">&#x1f50d; Analyze Image</button>
+        </form>
+
+        <div class="disclaimer" style="margin-top:16px;">
+            &#x26a0;&#xfe0f; <strong>Prototype mode:</strong> This demo simulates AI disease detection. A real trained model (CNN) can be integrated later through the model interface (<code>models/model_interface.py</code>).
+        </div>
+    </div>
+
+    <!-- Detection Result -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f9ea; Detection Result</h3>
+            <span class="card-icon">&#x1f4d4;</span>
+        </div>
+
+        {% if result %}
+            {% if image_url %}
+            <img src="{{ url_for('static', filename=image_url) }}" alt="Uploaded crop image" class="image-preview">
+            {% endif %}
+
+            {% if result.status == 'success' %}
+            <div class="stats-grid">
+                <div class="stat-card {{ 'danger' if result.condition != 'Healthy' else 'success' }}">
+                    <div class="stat-label">Predicted Condition</div>
+                    <div class="stat-value" style="font-size:18px;">{{ result.prediction }}</div>
+                    <div class="stat-sub">{{ result.condition }}</div>
+                </div>
+                <div class="stat-card info">
+                    <div class="stat-label">Confidence</div>
+                    <div class="stat-value">{{ result.confidence }}%</div>
+                    <div class="stat-sub">Model confidence</div>
+                </div>
+            </div>
+
+            <div class="rec-section">
+                <h4>&#x1f50d; Possible Symptoms</h4>
+                <div class="rec-item">{{ result.symptoms }}</div>
+            </div>
+
+            <div class="rec-section">
+                <h4>&#x1f528; Suggested Action</h4>
+                <div class="rec-item moderate">{{ result.action }}</div>
+            </div>
+
+            <div class="rec-section">
+                <h4>&#x1f6e1;&#xfe0f; Prevention Advice</h4>
+                <div class="rec-item">{{ result.prevention }}</div>
+            </div>
+
+            {% else %}
+            <div class="alert alert-danger">
+                <span class="alert-icon">&#x274c;</span>
+                <div>{{ result.error }}</div>
+            </div>
+            {% endif %}
+
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-icon">&#x1f4f7;</span>
+                <p>Upload an image of your crop leaf to check for possible diseases.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Detections -->
+<div class="card">
+    <div class="card-header">
+        <h3>&#x1f4cb; Recent Detections</h3>
+        <span class="card-icon">&#x1f9ea;</span>
+    </div>
+    {% if recent_detections %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Image</th>
+                    <th>Prediction</th>
+                    <th>Confidence</th>
+                    <th>Condition</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for det in recent_detections %}
+                <tr>
+                    <td>{{ det.created_at }}</td>
+                    <td><a href="{{ url_for('static', filename='uploads/' ~ det.image_filename) }}" target="_blank">View</a></td>
+                    <td>{{ det.prediction }}</td>
+                    <td>{{ det.confidence }}%</td>
+                    <td>
+                        <span class="badge {{ 'badge-danger' if det.condition_type != 'Healthy' else 'badge-success' }}">
+                            {{ det.condition_type }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">&#x1f4cb;</span>
+        <p>No disease detections yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

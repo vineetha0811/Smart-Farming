@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Farm Setup - AI Smart Farming Assistant{% endblock %}
+{% block page_title %}Farm / Crop Setup{% endblock %}
+
+{% block content %}
+<div class="two-col">
+    <!-- Farm Setup Form -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f4c8; Crop Information</h3>
+            <span class="card-icon">&#x1f331;</span>
+        </div>
+
+        <form method="POST" action="{{ url_for('farm') }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="crop_name">Crop Name *</label>
+                    <input type="text" id="crop_name" name="crop_name" value="{{ farm.crop_name if farm else '' }}" placeholder="e.g. Rice, Wheat, Tomato" required>
+                </div>
+                <div class="form-group">
+                    <label for="crop_variety">Crop Variety</label>
+                    <input type="text" id="crop_variety" name="crop_variety" value="{{ farm.crop_variety if farm else '' }}" placeholder="e.g. Basmati, Pusa-44">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="farm_area">Farm Area</label>
+                    <input type="text" id="farm_area" name="farm_area" value="{{ farm.farm_area if farm else '' }}" placeholder="e.g. 2 acres">
+                </div>
+                <div class="form-group">
+                    <label for="soil_type">Soil Type</label>
+                    <select id="soil_type" name="soil_type">
+                        <option value="" {% if not farm or not farm.soil_type %}selected{% endif %}>Select soil type</option>
+                        {% for soil in ['Clay', 'Sandy', 'Loamy', 'Silty', 'Peaty', 'Saline', 'Black Soil', 'Red Soil'] %}
+                        <option value="{{ soil }}" {% if farm and farm.soil_type == soil %}selected{% endif %}>{{ soil }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="growth_stage">Growth Stage</label>
+                    <select id="growth_stage" name="growth_stage">
+                        <option value="" {% if not farm or not farm.growth_stage %}selected{% endif %}>Select growth stage</option>
+                        {% for stage in ['Sowing', 'Germination', 'Seedling', 'Vegetative', 'Flowering', 'Fruiting', 'Maturity', 'Harvesting'] %}
+                        <option value="{{ stage }}" {% if farm and farm.growth_stage == stage %}selected{% endif %}>{{ stage }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sowing_date">Sowing Date</label>
+                    <input type="date" id="sowing_date" name="sowing_date" value="{{ farm.sowing_date if farm else '' }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Field Location</label>
+                <input type="text" id="location" name="location" value="{{ farm.location if farm else '' }}" placeholder="Village, District, State">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg">
+                {% if farm %}&#x1f504; Update Farm Information{% else %}&#x1f4be; Save Farm Information{% endif %}
+            </button>
+        </form>
+    </div>
+
+    <!-- Current Farm Summary -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f4ca; Current Farm Summary</h3>
+            <span class="card-icon">&#x1f3e0;</span>
+        </div>
+
+        {% if farm %}
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Crop</div>
+                <div class="stat-value" style="font-size:18px;">{{ farm.crop_name }}</div>
+                <div class="stat-sub">{{ farm.crop_variety or 'Variety not set' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Farm Area</div>
+                <div class="stat-value" style="font-size:18px;">{{ farm.farm_area or 'Not set' }}</div>
+                <div class="stat-sub">{{ farm.soil_type or 'Soil type not set' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Growth Stage</div>
+                <div class="stat-value" style="font-size:18px;">{{ farm.growth_stage or 'Not set' }}</div>
+                <div class="stat-sub">Sown: {{ farm.sowing_date or 'Not set' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Location</div>
+                <div class="stat-value" style="font-size:14px;">{{ farm.location or 'Not set' }}</div>
+                <div class="stat-sub">Updated: {{ farm.created_at }}</div>
+            </div>
+        </div>
+
+        <div class="disclaimer" style="margin-top:16px;">
+            &#x2139;&#xfe0f; This farm information is used by the Smart Irrigation, Risk Monitor, and Recommendations features to personalize advice for your crop.
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">&#x1f4c8;</span>
+            <p>No farm information saved yet.<br>Fill the form to set up your crop details.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}IoT Simulation - AI Smart Farming Assistant{% endblock %}
+{% block page_title %}Virtual Farm / IoT Simulation{% endblock %}
+
+{% block content %}
+<div class="card" style="border: 2px solid var(--primary);">
+    <div class="card-header">
+        <h3>&#x1f4e1; Virtual IoT Prototype - Wokwi</h3>
+        <span class="card-icon">&#x1f916;</span>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x2139;&#xfe0f;</span>
+        <div>
+            This page represents the <strong>field sensor prototype</strong>. The sensors are simulated using the
+            <strong>Wokwi ESP32 virtual environment</strong> - they are <strong>not</strong> physical hardware.
+            The Wokwi simulation sends sensor values to this Flask app through the internet using HTTP POST.
+        </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:220px;">
+            <div class="stat-label" style="font-size:12px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Wokwi Sensor Connection</div>
+            <div id="iot-connection-badge" class="badge badge-info" style="font-size:15px; padding:8px 20px; margin-top:6px;">
+                &#x1f535; Checking connection...
+            </div>
+        </div>
+        <div style="flex:1; min-width:220px;">
+            <div class="stat-label" style="font-size:12px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Last Received</div>
+            <div id="iot-last-updated" style="font-size:14px; margin-top:6px;">No live sensor data received yet.</div>
+        </div>
+    </div>
+
+    <div style="text-align:center; padding:6px; margin-bottom:16px;">
+        <a href="https://wokwi.com" target="_blank" rel="noopener" class="btn btn-secondary">&#x1f4bb; Open Wokwi Simulator</a>
+    </div>
+</div>
+
+<div class="two-col">
+    <!-- Latest Sensor Values -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f4ca; Latest Sensor Values</h3>
+            <span class="card-icon">&#x1f30a;</span>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card info">
+                <div class="stat-label">Soil Moisture</div>
+                <div class="stat-value" id="iot-soil-moisture">--</div>
+                <div class="stat-sub">Virtual sensor</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-label">Temperature</div>
+                <div class="stat-value" id="iot-temperature">--</div>
+                <div class="stat-sub">Virtual sensor</div>
+            </div>
+            <div class="stat-card info">
+                <div class="stat-label">Humidity</div>
+                <div class="stat-value" id="iot-humidity">--</div>
+                <div class="stat-sub">Virtual sensor</div>
+            </div>
+            <div class="stat-card info">
+                <div class="stat-label">Rainfall</div>
+                <div class="stat-value" id="iot-rainfall">--</div>
+                <div class="stat-sub">Virtual sensor</div>
+            </div>
+        </div>
+
+        <div class="stats-grid" style="margin-top:8px;">
+            <div class="stat-card">
+                <div class="stat-label">Irrigation Status</div>
+                <div class="stat-value" style="font-size:15px;" id="iot-irrigation">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Drought Risk</div>
+                <div class="stat-value" style="font-size:15px;" id="iot-drought">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Heat Risk</div>
+                <div class="stat-value" style="font-size:15px;" id="iot-heat">--</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Latest Recommendation -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f4a1; Latest Farmer Recommendation</h3>
+            <span class="card-icon">&#x1f4ad;</span>
+        </div>
+        <div class="rec-item" id="iot-recommendation" style="font-size:15px; line-height:1.7;">
+            Waiting for live sensor data...
+        </div>
+
+        <div class="disclaimer" style="margin-top:16px;">
+            &#x26a0;&#xfe0f; The recommendation is generated automatically by the Flask backend using the
+            irrigation and risk decision logic. It is meant for demonstration, not as a substitute for
+            professional agricultural advice.
+        </div>
+    </div>
+</div>
+
+<!-- Data Flow Explanation -->
+<div class="card">
+    <div class="card-header">
+        <h3>&#x1f504; How The IoT Data Flows</h3>
+        <span class="card-icon">&#x1f4ce;</span>
+    </div>
+    <div style="font-size:14px; line-height:2;">
+        <p><strong>Wokwi ESP32 (virtual)</strong> &#x1f511; reads/simulates: soil moisture, temperature, humidity, rainfall</p>
+        <p><strong>HTTP POST</strong> &#x2192; sends JSON to: <code>POST /api/sensor-data</code></p>
+        <p><strong>Flask backend</strong> &#x2192; validates values &#x2192; saves to SQLite (new record every update)</p>
+        <p><strong>Decision logic</strong> &#x2192; irrigation decision + drought/heat risk + farmer recommendation</p>
+        <p><strong>Dashboard / this page</strong> &#x2192; shows the analysis with live connection status</p>
+    </div>
+</div>
+
+{% endblock %}

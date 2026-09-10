@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "author": "SIH Team",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-dht22", "id": "dht22", "top": -80, "left": 320, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "soilpot", "top": 120, "left": 330, "attrs": { "value": "45" } },
+    { "type": "wokwi-potentiometer", "id": "rainpot", "top": 240, "left": 330, "attrs": { "value": "5" } }
+  ],
+  "connections": [
+    [ "esp:GND.1", "dht22:GND", "black", [] ],
+    [ "esp:3V3", "dht22:VCC", "red", [] ],
+    [ "esp:15", "dht22:OUT", "green", [] ],
+    [ "esp:5V", "soilpot:VCC", "red", [] ],
+    [ "esp:GND.2", "soilpot:GND", "black", [] ],
+    [ "esp:36", "soilpot:W", "blue", [] ],
+    [ "esp:5V", "rainpot:VCC", "red", [] ],
+    [ "esp:GND.1", "rainpot:GND", "black", [] ],
+    [ "esp:39", "rainpot:W", "yellow", [] ]
+  ]
+}

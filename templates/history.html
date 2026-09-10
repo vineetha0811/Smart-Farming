@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}History - AI Smart Farming Assistant{% endblock %}
+{% block page_title %}Farm History{% endblock %}
+
+{% block content %}
+<!-- Soil Readings History -->
+<div class="card">
+    <div class="card-header">
+        <h3>&#x1f4b2; Soil / Sensor Readings</h3>
+        <span class="card-icon">&#x1f4ca;</span>
+    </div>
+    {% if readings %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Soil Moisture</th>
+                    <th>Temperature</th>
+                    <th>Humidity</th>
+                    <th>Rainfall</th>
+                    <th>Irrigation Decision</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reading in readings %}
+                <tr>
+                    <td>{{ reading.created_at }}</td>
+                    <td>{{ reading.soil_moisture }}%</td>
+                    <td>{{ reading.temperature }}&deg;C</td>
+                    <td>{{ reading.humidity }}%</td>
+                    <td>{{ reading.rainfall }}mm</td>
+                    <td>
+                        {% set status = reading.irrigation_status or 'Unknown' %}
+                        <span class="badge {{ 'badge-danger' if 'Required' in status and 'Not' not in status else ('badge-warning' if status in ['Recommended Soon', 'Recommended', 'Urgently Required'] else 'badge-success') }}">{{ status }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">&#x1f4b2;</span>
+        <p>No sensor readings recorded yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Disease Detections -->
+<div class="card">
+    <div class="card-header">
+        <h3>&#x1f9ea; Disease Detections</h3>
+        <span class="card-icon">&#x1f3c3;</span>
+    </div>
+    {% if detections %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Prediction</th>
+                    <th>Condition</th>
+                    <th>Confidence</th>
+                    <th>Image</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for det in detections %}
+                <tr>
+                    <td>{{ det.created_at }}</td>
+                    <td>{{ det.prediction }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-danger' if det.condition_type != 'Healthy' else 'badge-success' }}">{{ det.condition_type }}</span>
+                    </td>
+                    <td>{{ det.confidence }}%</td>
+                    <td>
+                        {% if det.image_filename %}
+                        <a href="{{ url_for('static', filename='uploads/' ~ det.image_filename) }}" target="_blank">View image</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">&#x1f9ea;</span>
+        <p>No disease detections yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Risk Alerts -->
+<div class="card">
+    <div class="card-header">
+        <h3>&#x1f6a8; Risk Alerts</h3>
+        <span class="card-icon">&#x1f514;</span>
+    </div>
+    {% if alerts_list %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Alert Type</th>
+                    <th>Risk Level</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alert in alerts_list %}
+                <tr>
+                    <td>{{ alert.created_at }}</td>
+                    <td>{{ alert.alert_type }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-high' if alert.risk_level == 'HIGH' else ('badge-moderate' if alert.risk_level == 'MODERATE' else 'badge-low') }}">{{ alert.risk_level }}</span>
+                    </td>
+                    <td>{{ alert.message }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">&#x1f6a8;</span>
+        <p>No risk alerts yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Pest / Nutrient Diagnoses -->
+<div class="card">
+    <div class="card-header">
+        <h3>&#x1f41c; Pest &amp; Nutrient Diagnoses</h3>
+        <span class="card-icon">&#x1f9ea;</span>
+    </div>
+    {% if pest_diags %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Crop</th>
+                    <th>Stage</th>
+                    <th>Symptoms</th>
+                    <th>Diagnosis</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for diag in pest_diags %}
+                <tr>
+                    <td>{{ diag.created_at }}</td>
+                    <td>{{ diag.crop or '-' }}</td>
+                    <td>{{ diag.growth_stage or '-' }}</td>
+                    <td style="max-width:200px;">{{ diag.symptoms }}</td>
+                    <td style="max-width:250px; font-size:12px;">{{ diag.diagnosis_result }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">&#x1f41c;</span>
+        <p>No pest/nutrient diagnoses yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recommendations History -->
+<div class="card">
+    <div class="card-header">
+        <h3>&#x1f4a1; Recommendations</h3>
+        <span class="card-icon">&#x1f4c3;</span>
+    </div>
+    {% if recs_list %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Category</th>
+                    <th>Recommendation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in recs_list %}
+                <tr>
+                    <td>{{ rec.created_at }}</td>
+                    <td>{{ rec.category }}</td>
+                    <td>{{ rec.recommendation_text }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">&#x1f4a1;</span>
+        <p>No recommendations generated yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

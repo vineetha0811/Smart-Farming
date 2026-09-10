@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Recommendations - AI Smart Farming Assistant{% endblock %}
+{% block page_title %}Smart Recommendations{% endblock %}
+
+{% block content %}
+<div class="two-col">
+    <!-- Recommendation Generator -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f4a1; Generate Smart Recommendations</h3>
+            <span class="card-icon">&#x1f4ad;</span>
+        </div>
+
+        <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
+            Recommendations combine your latest sensor data, farm details, disease/pest checks, and risk assessment into simple, practical actions.
+        </p>
+
+        <div class="stats-grid" style="margin-bottom:16px;">
+            {% if reading %}
+            <div class="stat-card info">
+                <div class="stat-label">Latest Reading</div>
+                <div class="stat-value" style="font-size:16px;">{{ reading.soil_moisture }}% | {{ reading.temperature }}&deg;C</div>
+                <div class="stat-sub">{{ reading.created_at }}</div>
+            </div>
+            {% else %}
+            <div class="stat-card warning">
+                <div class="stat-label">No Sensor Data</div>
+                <div class="stat-value" style="font-size:16px;">Record a reading first</div>
+                <div class="stat-sub"><a href="{{ url_for('irrigation') }}" style="color:var(--primary);">Go to Irrigation &rarr;</a></div>
+            </div>
+            {% endif %}
+
+            {% if farm %}
+            <div class="stat-card success">
+                <div class="stat-label">Crop</div>
+                <div class="stat-value" style="font-size:16px;">{{ farm.crop_name }}</div>
+                <div class="stat-sub">{{ farm.growth_stage or 'Stage not set' }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <form method="POST" action="{{ url_for('recommendations') }}">
+            <button type="submit" class="btn btn-primary btn-lg btn-block">&#x1f50d; Generate Recommendations</button>
+        </form>
+
+        <div class="disclaimer" style="margin-top:16px;">
+            &#x2139;&#xfe0f; Recommendations use the latest data from all analysis modules. Record fresh sensor readings for the most relevant advice.
+        </div>
+    </div>
+
+    <!-- Recommendation Results -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f4a1; Recommended Actions</h3>
+            <span class="card-icon">&#x1f4d4;</span>
+        </div>
+
+        {% if recs %}
+            {% if recs.immediate %}
+            <div class="rec-section">
+                <h4>&#x26a0;&#xfe0f; Immediate Actions</h4>
+                {% for r in recs.immediate %}
+                <div class="rec-item urgent">{{ r }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if recs.today %}
+            <div class="rec-section">
+                <h4>&#x1f4c5; Today</h4>
+                {% for r in recs.today %}
+                <div class="rec-item moderate">{{ r }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if recs.this_week %}
+            <div class="rec-section">
+                <h4>&#x1f4c6; This Week</h4>
+                {% for r in recs.this_week %}
+                <div class="rec-item">{{ r }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if recs.general %}
+            <div class="rec-section">
+                <h4>&#x1f4cb; General Advice</h4>
+                {% for r in recs.general %}
+                <div class="rec-item">{{ r }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="disclaimer">
+                &#x26a0;&#xfe0f; These are preliminary recommendations. For critical agricultural decisions, always consult a qualified agricultural expert.
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-icon">&#x1f4a1;</span>
+                <p>Click "Generate Recommendations" to see practical advice for your farm.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Past Recommendations -->
+<div class="card">
+    <div class="card-header">
+        <h3>&#x1f4cb; Past Recommendations</h3>
+        <span class="card-icon">&#x1f4c3;</span>
+    </div>
+    {% if past_recs %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Category</th>
+                    <th>Recommendation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in past_recs %}
+                <tr>
+                    <td>{{ rec.created_at }}</td>
+                    <td>{{ rec.category }}</td>
+                    <td>{{ rec.recommendation_text }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">&#x1f4cb;</span>
+        <p>No past recommendations yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

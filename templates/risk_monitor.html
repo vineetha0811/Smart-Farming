@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Risk Monitor - AI Smart Farming Assistant{% endblock %}
+{% block page_title %}Farm Risk Monitor{% endblock %}
+
+{% block content %}
+<div class="two-col">
+    <!-- Risk Assessment Form -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x26a0;&#xfe0f; Environmental Input</h3>
+            <span class="card-icon">&#x1f325;</span>
+        </div>
+
+        {% if farm %}
+        <div class="alert alert-success">
+            <span class="alert-icon">&#x1f331;</span>
+            <div>
+                Analyzing for <strong>{{ farm.crop_name }}</strong>
+                {% if farm.growth_stage %}({{ farm.growth_stage }} stage){% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            <span class="alert-icon">&#x26a0;&#xfe0f;</span>
+            <div>No farm set up yet. Risks will be calculated for general conditions. <a href="{{ url_for('farm') }}" style="color:var(--primary); font-weight:600;">Set up your farm &rarr;</a></div>
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('risk_monitor') }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="soil_moisture">Soil Moisture (%)</label>
+                    <input type="number" id="soil_moisture" name="soil_moisture" value="50" min="0" max="100" step="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="temperature">Temperature (&deg;C)</label>
+                    <input type="number" id="temperature" name="temperature" value="30" min="-10" max="55" step="0.5" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="humidity">Humidity (%)</label>
+                    <input type="number" id="humidity" name="humidity" value="50" min="0" max="100" step="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="rainfall">Recent Rainfall (mm)</label>
+                    <input type="number" id="rainfall" name="rainfall" value="0" min="0" max="100" step="0.5">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg">&#x1f6a8; Assess Risk</button>
+        </form>
+
+        <div class="disclaimer" style="margin-top:16px;">
+            &#x2139;&#xfe0f; Risk levels are calculated using simple farmer-friendly rules comparing values with crop heath thresholds.
+        </div>
+    </div>
+
+    <!-- Risk Results -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f6a8; Risk Indicators</h3>
+            <span class="card-icon">&#x1f4ca;</span>
+        </div>
+
+        {% if risks %}
+            {% set overall = risks.overall %}
+            <div style="text-align:center; margin-bottom:20px; padding:16px; background:var(--bg-main); border-radius:var(--radius-lg);">
+                <span style="font-size:14px; color:var(--text-secondary); display:block; margin-bottom:8px;">Overall Risk Level</span>
+                <span class="badge {{ 'badge-high' if overall == 'HIGH' else ('badge-moderate' if overall == 'MODERATE' else 'badge-low') }}" style="font-size:20px; padding:8px 28px;">{{ overall }}</span>
+            </div>
+
+            <div class="risk-grid">
+                {% set risk_items = [
+                    ('drought', '\u2600\ufe0f Drought'),
+                    ('flood', '\U0001f30a Flood'),
+                    ('heat_stress', '\U0001f525 Heat Stress'),
+                    ('excess_rain', '\U0001f327\ufe0f Excess Rainfall'),
+                    ('low_moisture', '\U0001f4a7 Low Soil Moisture')
+                ] %}
+                {% for key, label in risk_items %}
+                <div class="risk-card risk-{{ risks[key].level|lower }}">
+                    <div class="risk-label">{{ label }}</div>
+                    <div class="risk-level">{{ risks[key].level }}</div>
+                    <div class="risk-message">{{ risks[key].message }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-icon">&#x1f6a8;</span>
+                <p>Enter environmental values to assess drought, flood, heat, and moisture risks.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Alerts -->
+<div class="card">
+    <div class="card-header">
+        <h3>&#x1f514; Recent Risk Alerts</h3>
+        <span class="card-icon">&#x1f4c3;</span>
+    </div>
+    {% if recent_alerts %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Alert Type</th>
+                    <th>Risk Level</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alert in recent_alerts %}
+                <tr>
+                    <td>{{ alert.created_at }}</td>
+                    <td>{{ alert.alert_type }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-high' if alert.risk_level == 'HIGH' else ('badge-moderate' if alert.risk_level == 'MODERATE' else 'badge-low') }}">{{ alert.risk_level }}</span>
+                    </td>
+                    <td>{{ alert.message }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">&#x1f514;</span>
+        <p>No alerts yet. Assess risks to check for possible threats to your crop.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

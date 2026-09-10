@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - AI Smart Farming Assistant{% endblock %}
+{% block page_title %}Farmer Dashboard{% endblock %}
+
+{% block content %}
+<!-- LIVE FARM SENSOR DATA (from the Wokwi ESP32 virtual prototype) -->
+<div class="card" style="border: 2px solid var(--primary);" id="live-sensor-card">
+    <div class="card-header">
+        <h3>&#x1f4e1; LIVE FARM SENSOR DATA <span class="badge badge-warning">Virtual IoT - Wokwi</span></h3>
+        <span class="card-icon" id="live-sensor-status">&#x1f7e2;</span>
+    </div>
+    <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">
+        This section shows the latest readings pushed by the virtual ESP32 running in Wokwi.
+        It refreshes automatically.
+    </p>
+
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+        <span id="live-connection-badge" class="badge badge-info">Checking connection...</span>
+        <span id="live-last-updated" style="font-size:12px; color:var(--text-light);">No live sensor data received yet.</span>
+    </div>
+
+    <div class="stats-grid" id="live-sensor-grid">
+        <div class="stat-card info">
+            <div class="stat-label">Soil Moisture</div>
+            <div class="stat-value" id="live-soil-moisture">--</div>
+            <div class="stat-sub">Virtual sensor</div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-label">Temperature</div>
+            <div class="stat-value" id="live-temperature">--</div>
+            <div class="stat-sub">Virtual sensor</div>
+        </div>
+        <div class="stat-card info">
+            <div class="stat-label">Humidity</div>
+            <div class="stat-value" id="live-humidity">--</div>
+            <div class="stat-sub">Virtual sensor</div>
+        </div>
+        <div class="stat-card info">
+            <div class="stat-label">Rainfall</div>
+            <div class="stat-value" id="live-rainfall">--</div>
+            <div class="stat-sub">Virtual sensor</div>
+        </div>
+    </div>
+
+    <div class="stats-grid" id="live-analysis-grid">
+        <div class="stat-card">
+            <div class="stat-label">Irrigation Status</div>
+            <div class="stat-value" style="font-size:15px;" id="live-irrigation">--</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Drought Risk</div>
+            <div class="stat-value" style="font-size:15px;" id="live-drought">--</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Heat Risk</div>
+            <div class="stat-value" style="font-size:15px;" id="live-heat">--</div>
+        </div>
+    </div>
+
+    <div class="rec-item" id="live-recommendation" style="margin-top:6px;">
+        Waiting for live sensor data...
+    </div>
+</div>
+
+<!-- Farm Overview Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Farmer</div>
+        <div class="stat-value">{{ session.get('user_name', 'Farmer') }}</div>
+        {% if farm %}
+        <div class="stat-sub">{{ farm.crop_name }} ({{ farm.growth_stage or 'Growing' }})</div>
+        {% else %}
+        <div class="stat-sub">No crop selected</div>
+        {% endif %}
+    </div>
+
+    <div class="stat-card {{ 'danger' if soil_moisture < 35 else 'success' }}">
+        <div class="stat-label">Soil Moisture</div>
+        <div class="stat-value">{{ soil_moisture }}%</div>
+        <div class="stat-sub">{{ "Low - needs attention" if soil_moisture < 35 else "Healthy level" }}</div>
+    </div>
+
+    <div class="stat-card {{ 'warning' if temperature > 35 else 'info' }}">
+        <div class="stat-label">Temperature</div>
+        <div class="stat-value">{{ temperature }}&deg;C</div>
+        <div class="stat-sub">{{ "High - watch for heat stress" if temperature > 35 else "Normal range" }}</div>
+    </div>
+
+    <div class="stat-card info">
+        <div class="stat-label">Humidity</div>
+        <div class="stat-value">{{ humidity }}%</div>
+        <div class="stat-sub">{{ "High - fungal risk" if humidity > 80 else "Normal range" }}</div>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card {{ 'warning' if irrigation_status and 'Not' not in irrigation_status else 'success' }}">
+        <div class="stat-label">Irrigation</div>
+        <div class="stat-value" style="font-size:18px;">{{ irrigation_status }}</div>
+        <div class="stat-sub">Based on latest reading</div>
+    </div>
+
+    <div class="stat-card {{ 'danger' if health_status == 'At Risk' else 'success' }}">
+        <div class="stat-label">Crop Health</div>
+        <div class="stat-value" style="font-size:18px;">{{ health_status }}</div>
+        <div class="stat-sub">Latest health assessment</div>
+    </div>
+
+    <div class="stat-card {{ 'danger' if risk_level == 'HIGH' else ('warning' if risk_level == 'MODERATE' else 'success') }}">
+        <div class="stat-label">Risk Level</div>
+        <div class="stat-value" style="font-size:18px;">{{ risk_level }}</div>
+        <div class="stat-sub">Combined environmental risk</div>
+    </div>
+</div>
+
+<div class="two-col">
+    <!-- Recent Alerts -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f514; Recent Alerts</h3>
+            <span class="card-icon">&#x26a0;&#xfe0f;</span>
+        </div>
+        {% if alerts %}
+            {% for alert in alerts %}
+            <div class="alert alert-{{ 'danger' if alert.risk_level == 'HIGH' else ('warning' if alert.risk_level == 'MODERATE' else 'info') }}">
+                <span class="alert-icon">{% if alert.risk_level == 'HIGH' %}&#x1f534;{% elif alert.risk_level == 'MODERATE' %}&#x1f7e0;{% else %}&#x1f535;{% endif %}</span>
+                <div>
+                    <div>{{ alert.message }}</div>
+                    <small style="color:var(--text-light);">Type: {{ alert.alert_type }} | {{ alert.created_at }}</small>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-icon">&#x2705;</span>
+                <p>No alerts yet. Your farm looks safe.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Latest Recommendation -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f4a1; Latest Recommendation</h3>
+            <span class="card-icon">&#x1f4ad;</span>
+        </div>
+        {% if recommendation %}
+        <div class="rec-item">{{ recommendation.recommendation_text }}</div>
+        <div class="form-hint">Category: {{ recommendation.category }} | {{ recommendation.created_at }}</div>
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-icon">&#x1f4dd;</span>
+                <p>No recommendations yet. Try the Smart Recommendations page.</p>
+            </div>
+        {% endif %}
+
+        <div style="margin-top:16px;">
+            <a href="{{ url_for('recommendations') }}" class="btn btn-primary btn-sm">Get Recommendations</a>
+            <a href="{{ url_for('irrigation') }}" class="btn btn-outline btn-sm">Check Irrigation</a>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card">
+    <div class="card-header">
+        <h3>&#x1f3af; Quick Actions</h3>
+        <span class="card-icon">&#x1f680;</span>
+    </div>
+    <div class="stats-grid">
+        <a href="{{ url_for('farm') }}" class="stat-card info" style="text-decoration:none;">
+            <div class="stat-label">&#x1f4c8; Farm Setup</div>
+            <div class="stat-value" style="font-size:14px;">Add / Update crop</div>
+            <div class="stat-sub">Set up your farm details</div>
+        </a>
+        <a href="{{ url_for('irrigation') }}" class="stat-card info" style="text-decoration:none;">
+            <div class="stat-label">&#x1f4a7; Smart Irrigation</div>
+            <div class="stat-value" style="font-size:14px;">Analyze soil moisture</div>
+            <div class="stat-sub">Know when to water</div>
+        </a>
+        <a href="{{ url_for('disease') }}" class="stat-card info" style="text-decoration:none;">
+            <div class="stat-label">&#x1f3c3; Crop Health</div>
+            <div class="stat-value" style="font-size:14px;">Detect crop disease</div>
+            <div class="stat-sub">Upload a leaf photo</div>
+        </a>
+        <a href="{{ url_for('risk_monitor') }}" class="stat-card info" style="text-decoration:none;">
+            <div class="stat-label">&#x26a0;&#xfe0f; Risk Monitor</div>
+            <div class="stat-value" style="font-size:14px;">Check farm risks</div>
+            <div class="stat-sub">Drought, flood, heat</div>
+        </a>
+    </div>
+</div>
+
+{% endblock %}

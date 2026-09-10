@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Pest &amp; Nutrient - AI Smart Farming Assistant{% endblock %}
+{% block page_title %}Pest and Nutrient Assistant{% endblock %}
+
+{% block content %}
+<div class="two-col">
+    <!-- Diagnosis Form -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f41c; Describe Crop Symptoms</h3>
+            <span class="card-icon">&#x1f331;</span>
+        </div>
+
+        <form method="POST" action="{{ url_for('pest_nutrient') }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="crop">Crop</label>
+                    <input type="text" id="crop" name="crop" value="{{ farm.crop_name if farm else '' }}" placeholder="e.g. Rice, Tomato">
+                </div>
+                <div class="form-group">
+                    <label for="growth_stage">Growth Stage</label>
+                    <select id="growth_stage" name="growth_stage">
+                        <option value="" {% if not farm or not farm.growth_stage %}selected{% endif %}>Select stage</option>
+                        {% for stage in ['Sowing', 'Germination', 'Seedling', 'Vegetative', 'Flowering', 'Fruiting', 'Maturity', 'Harvesting'] %}
+                        <option value="{{ stage }}" {% if farm and farm.growth_stage == stage %}selected{% endif %}>{{ stage }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="leaf_condition">Leaf Condition</label>
+                <select id="leaf_condition" name="leaf_condition">
+                    <option value="">Select leaf condition</option>
+                    {% for cond in ['Normal green leaves', 'Yellowing leaves', 'Holes in leaves', 'Brown spots on leaves', 'Wilting leaves', 'Purple discoloration', 'White powdery coating', 'Curled or deformed leaves', 'Brown/dry leaf edges'] %}
+                    <option value="{{ cond }}">{{ cond }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="soil_condition">Soil Condition</label>
+                <select id="soil_condition" name="soil_condition">
+                    <option value="">Select soil condition</option>
+                    {% for cond in ['Normal', 'Sandy / drains fast', 'Clay / holds water', 'Salty', 'Too wet', 'Too dry', 'Poor / low fertility'] %}
+                    <option value="{{ cond }}">{{ cond }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="symptoms">Recent Symptoms *</label>
+                <textarea id="symptoms" name="symptoms" placeholder="Describe what you observed... e.g. Lower leaves turning yellow, holes in leaves, white powdery spots on top leaves" required></textarea>
+                <div class="form-hint">Mention things like leaf color change, holes, spots, insects, wilting, etc.</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg">&#x1f50d; Analyze Symptoms</button>
+        </form>
+
+        <div class="disclaimer" style="margin-top:16px;">
+            &#x26a0;&#xfe0f; Results are <strong>preliminary recommendations</strong> based on described symptoms, not guaranteed diagnoses. For accurate diagnosis, consult a qualified agricultural expert.
+        </div>
+    </div>
+
+    <!-- Diagnosis Result -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f9ea; Diagnosis Result</h3>
+            <span class="card-icon">&#x1f4d4;</span>
+        </div>
+
+        {% if result %}
+            <div class="stats-grid">
+                <div class="stat-card info">
+                    <div class="stat-label">Crop</div>
+                    <div class="stat-value" style="font-size:16px;">{{ result.crop or 'Not specified' }}</div>
+                    <div class="stat-sub">Stage: {{ result.growth_stage or 'Not specified' }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Issues Found</div>
+                    <div class="stat-value" style="font-size:16px;">{{ result.diagnoses|length }}</div>
+                    <div class="stat-sub">Preliminary analysis</div>
+                </div>
+            </div>
+
+            {% for diag in result.diagnoses %}
+            <div class="card" style="margin-bottom:14px; box-shadow:none; border:1px solid var(--border);">
+                <div class="rec-section" style="margin-bottom:0;">
+                    <h4 style="display:flex; align-items:center; gap:8px;">
+                        <span class="badge {{ 'badge-danger' if diag.severity == 'High' else 'badge-warning' }}">{{ diag.severity }}</span>
+                        {{ diag.issue }}
+                    </h4>
+                    <div class="rec-section-content" style="margin-top:10px;">
+                        <p style="font-size:13px; margin-bottom:8px;"><strong>Type:</strong> {{ diag.type }}</p>
+                        <p style="font-size:13px; margin-bottom:8px;"><strong>Symptoms:</strong> {{ diag.symptoms }}</p>
+                        <p style="font-size:13px; margin-bottom:8px;"><strong>Recommendation:</strong> {{ diag.recommendation }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="alert alert-info">
+                <span class="alert-icon">&#x2139;&#xfe0f;</span>
+                <div>{{ result.disclaimer }}</div>
+            </div>
+
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-icon">&#x1f41c;</span>
+                <p>Describe the symptoms you observed to get a preliminary diagnosis.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Diagnoses -->
+<div class="card">
+    <div class="card-header">
+        <h3>&#x1f4cb; Recent Diagnoses</h3>
+        <span class="card-icon">&#x1f4c3;</span>
+    </div>
+    {% if recent_diagnoses %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Crop</th>
+                    <th>Growth Stage</th>
+                    <th>Symptoms</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for diag in recent_diagnoses %}
+                <tr>
+                    <td>{{ diag.created_at }}</td>
+                    <td>{{ diag.crop or '-' }}</td>
+                    <td>{{ diag.growth_stage or '-' }}</td>
+                    <td style="max-width:300px;">{{ diag.symptoms }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">&#x1f4cb;</span>
+        <p>No diagnoses yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

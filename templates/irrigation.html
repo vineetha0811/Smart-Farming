@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Smart Irrigation - AI Smart Farming Assistant{% endblock %}
+{% block page_title %}Smart Irrigation Assistant{% endblock %}
+
+{% block content %}
+
+<!-- Lumen Live Farm Simulation -->
+<div class="card" style="border: 2px solid var(--primary);">
+    <div class="card-header">
+        <h3>&#x1f4ca; Live Farm Simulation <span class="badge badge-warning">SIH Demo Feature</span></h3>
+        <span class="card-icon">&#x1f680;</span>
+    </div>
+    <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
+        Simulate changing sensor values and analyze the farm instantly. This demonstrates the "field-deployable" concept without physical hardware.
+    </p>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="sim_soil_moisture">Soil Moisture (%)</label>
+            <input type="number" id="sim_soil_moisture" value="25" min="0" max="100" step="1">
+        </div>
+        <div class="form-group">
+            <label for="sim_temperature">Temperature (&deg;C)</label>
+            <input type="number" id="sim_temperature" value="36" min="-10" max="55" step="0.5">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="sim_humidity">Humidity (%)</label>
+            <input type="number" id="sim_humidity" value="45" min="0" max="100" step="1">
+        </div>
+        <div class="form-group">
+            <label for="sim_rainfall">Rainfall (mm)</label>
+            <input type="number" id="sim_rainfall" value="0" min="0" max="100" step="0.5">
+        </div>
+    </div>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;">
+        <button class="btn btn-secondary" onclick="generateSensorData()" id="generateBtn">&#x1f4ca; Generate Sensor Data</button>
+        <button class="btn btn-primary btn-lg" onclick="analyzeFarm()" id="analyzeBtn">&#x1f50d; Analyze Farm</button>
+        <button class="btn btn-outline" onclick="saveSimulation()">&#x1f4be; Save to History</button>
+    </div>
+
+    <!-- Results will be rendered here by JavaScript -->
+    <div id="analysis-results"></div>
+</div>
+
+<div class="two-col">
+    <!-- Manual Irrigation Input -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f4a7; Manual Sensor Reading</h3>
+            <span class="card-icon">&#x1f30a;</span>
+        </div>
+
+        <form method="POST" action="{{ url_for('irrigation') }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="soil_moisture">Soil Moisture (%)</label>
+                    <input type="number" id="soil_moisture" name="soil_moisture" value="50" min="0" max="100" step="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="temperature">Temperature (&deg;C)</label>
+                    <input type="number" id="temperature" name="temperature" value="30" min="-10" max="55" step="0.5" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="humidity">Humidity (%)</label>
+                    <input type="number" id="humidity" name="humidity" value="50" min="0" max="100" step="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="rainfall">Recent Rainfall (mm) <span style="font-weight:normal;">(optional)</span></label>
+                    <input type="number" id="rainfall" name="rainfall" value="0" min="0" max="100" step="0.5">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">&#x1f50d; Analyze Irrigation</button>
+        </form>
+
+        <div class="disclaimer" style="margin-top:16px;">
+            &#x2139;&#xfe0f; In the full version, these values will come automatically from soil moisture and weather sensors placed in the field.
+        </div>
+    </div>
+
+    <!-- Irrigation Result -->
+    <div class="card">
+        <div class="card-header">
+            <h3>&#x1f4a7; Irrigation Decision</h3>
+            <span class="card-icon">&#x1f4ca;</span>
+        </div>
+        {% if result %}
+            {% set urgency = result.urgency %}
+            <div class="stats-grid">
+                <div class="stat-card {{ 'danger' if urgency == 'critical' else ('warning' if urgency == 'high' else ('info' if urgency == 'moderate' else 'success')) }}">
+                    <div class="stat-label">Current Moisture</div>
+                    <div class="stat-value">{{ result.soil_moisture }}%</div>
+                    <div class="stat-sub">{{ result.temperature }}&deg;C | {{ result.humidity }}% humidity</div>
+                </div>
+                <div class="stat-card {{ 'danger' if urgency == 'critical' else ('warning' if urgency == 'high' else ('info' if urgency == 'moderate' else 'success')) }}">
+                    <div class="stat-label">Irrigation Status</div>
+                    <div class="stat-value" style="font-size:16px;">{{ result.status }}</div>
+                    <div class="stat-sub">Rainfall: {{ result.rainfall }}mm</div>
+                </div>
+            </div>
+
+            <div class="alert alert-{{ 'danger' if urgency == 'critical' else ('warning' if urgency == 'high' else ('info' if urgency == 'moderate' else 'success')) }}">
+                <span class="alert-icon">&#x1f4a7;</span>
+                <div>
+                    <strong>Reason:</strong> {{ result.reason }}
+                </div>
+            </div>
+
+            <div class="rec-item">
+                <strong>Suggested Action:</strong><br>
+                {{ result.action }}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-icon">&#x1f4a7;</span>
+                <p>Enter sensor values on the left to get an irrigation recommendation.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Readings -->
+<div class="card">
+    <div class="card-header">
+        <h3>&#x1f4cb; Recent Readings</h3>
+        <span class="card-icon">&#x1f4c3;</span>
+    </div>
+    {% if recent_readings %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Soil Moisture</th>
+                    <th>Temperature</th>
+                    <th>Humidity</th>
+                    <th>Rainfall</th>
+                    <th>Irrigation Decision</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reading in recent_readings %}
+                <tr>
+                    <td>{{ reading.created_at }}</td>
+                    <td>{{ reading.soil_moisture }}%</td>
+                    <td>{{ reading.temperature }}&deg;C</td>
+                    <td>{{ reading.humidity }}%</td>
+                    <td>{{ reading.rainfall }}mm</td>
+                    <td>
+                        {% set status = reading.irrigation_status or '' %}
+                        <span class="badge {{ 'badge-danger' if 'Required' in status and 'Not' not in status else ('badge-warning' if status == 'Recommended Soon' or status == 'Recommended' else 'badge-success') }}">{{ status }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">&#x1f4c3;</span>
+        <p>No sensor readings recorded yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
