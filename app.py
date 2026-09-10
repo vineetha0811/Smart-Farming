@@ -380,11 +380,20 @@ def dashboard():
         (user_id,)
     ).fetchone()
     
-    # Get latest sensor reading
+    # Get the latest sensor reading for the overview stats below.
+    # The Wokwi (live IoT) reading is preferred: if the virtual ESP32 has
+    # pushed data, that represents the current field conditions.
+    # If no Wokwi data exists yet, fall back to the logged-in user's most
+    # recent reading (e.g. entered manually on the irrigation page).
     reading = db.execute(
-        "SELECT * FROM sensor_readings WHERE user_id = ? ORDER BY id DESC LIMIT 1",
-        (user_id,)
+        "SELECT * FROM sensor_readings WHERE source = 'wokwi' ORDER BY id DESC LIMIT 1"
     ).fetchone()
+
+    if not reading:
+        reading = db.execute(
+            "SELECT * FROM sensor_readings WHERE user_id = ? ORDER BY id DESC LIMIT 1",
+            (user_id,)
+        ).fetchone()
     
     # Get latest disease detection
     disease = db.execute(
