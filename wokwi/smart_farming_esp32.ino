@@ -39,8 +39,7 @@
 //
 // NOTE: An HTTPS URL is used because Render serves HTTPS only.
 // ============================================================
-#define SERVER_URL "https://YOUR-RENDER-APP.onrender.com/api/sensor-data"
-
+#define SERVER_URL "https://smart-farming-b7zd.onrender.com/api/sensor-data"
 // Wokwi simulator uses this WiFi network. On real hardware this
 // would be the farmer's router / mobile hotspot.
 const char* WIFI_SSID = "Wokwi-GUEST";
